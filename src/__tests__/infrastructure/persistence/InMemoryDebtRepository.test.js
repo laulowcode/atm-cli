@@ -71,4 +71,17 @@ describe('InMemoryDebtRepository', () => {
     const foundAfterRemove = repo.findDebtBetween('John Doe', 'Jane Doe');
     expect(foundAfterRemove).toBeUndefined();
   });
+
+  it('should handle removing debt when index is -1', () => {
+    const debt = new Debt('John Doe', 'Jane Doe', 100);
+    
+    const wrongDebt = new Debt('Wrong', 'Wrong', 100);
+    repo.remove(wrongDebt);
+
+    repo.save(debt);
+    repo.remove(wrongDebt);
+    
+    const found = repo.findDebtBetween('John Doe', 'Jane Doe');
+    expect(found).toBe(debt);
+  });
 });
