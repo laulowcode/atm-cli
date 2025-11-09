@@ -10,7 +10,8 @@ const mockAccountRepository = {
 
 const mockDebtRepository = {
   findDebtBetween: jest.fn(),
-  save: jest.fn()
+  save: jest.fn(),
+  remove: jest.fn()
 };
 
 describe('TransferMoney', () => {
@@ -23,6 +24,7 @@ describe('TransferMoney', () => {
     mockAccountRepository.save.mockClear();
     mockDebtRepository.findDebtBetween.mockClear();
     mockDebtRepository.save.mockClear();
+    mockDebtRepository.remove.mockClear();
 
     transferMoney = new TransferMoney(mockAccountRepository, mockDebtRepository);
     senderAccount = new Account("Alice", 100);
@@ -54,10 +56,14 @@ describe('TransferMoney', () => {
   });
 
   it('should transfer fully if sender has enough balance', () => {
+    mockDebtRepository.findDebtBetween.mockReturnValue(null);
     const result = transferMoney.execute("Alice", "Bob", 50);
+    expect(result.amount).toBe(50);
     expect(result.senderNewBalance).toBe(50);
     expect(result.cashTransferred).toBe(50);
+    expect(result.debtReduced).toBe(0);
     expect(result.debtCreated).toBe(0);
+    expect(result.receiverOwesBack).toBe(0);
     expect(mockAccountRepository.save).toHaveBeenCalledTimes(2);
     expect(mockAccountRepository.save).toHaveBeenCalledWith(senderAccount);
     expect(mockAccountRepository.save).toHaveBeenCalledWith(receiverAccount);
@@ -67,10 +73,14 @@ describe('TransferMoney', () => {
   });
 
   it ('should create debt if balance is not enough (no existing debt)', () => {
+    mockDebtRepository.findDebtBetween.mockReturnValue(null);
     const result = transferMoney.execute("Alice", "Bob", 150);
+    expect(result.amount).toBe(150);
     expect(result.senderNewBalance).toBe(0);
     expect(result.cashTransferred).toBe(100);
+    expect(result.debtReduced).toBe(0);
     expect(result.debtCreated).toBe(50);
+    expect(result.receiverOwesBack).toBe(0);
     expect(mockAccountRepository.save).toHaveBeenCalledTimes(2);
     expect(mockAccountRepository.save).toHaveBeenCalledWith(expect.objectContaining({ name: "Alice", balance: 0 }));
     expect(mockAccountRepository.save).toHaveBeenCalledWith(expect.objectContaining({ name: "Bob", balance: 150 }));
@@ -78,13 +88,20 @@ describe('TransferMoney', () => {
     expect(mockDebtRepository.save).toHaveBeenCalledWith(expect.objectContaining({ debtorName: "Alice", creditorName: "Bob", amount: 50 }));
   });
 
-  it('should update existing debt if balance is not enough (existing debt)', () => {
+  it('should update existing debt if balance is not enough (sender owes receiver)', () => {
     const existingDebt = new Debt("Alice", "Bob", 100);
-    mockDebtRepository.findDebtBetween.mockReturnValue(existingDebt);
+    mockDebtRepository.findDebtBetween.mockImplementation((debtor, creditor) => {
+      if (debtor === "Alice" && creditor === "Bob") return existingDebt;
+      return null;
+    });
     const result = transferMoney.execute("Alice", "Bob", 150);
+    expect(result.amount).toBe(150);
     expect(result.senderNewBalance).toBe(0);
     expect(result.cashTransferred).toBe(100);
+    expect(result.debtReduced).toBe(0);
     expect(result.debtCreated).toBe(50);
+    expect(result.receiverOwesBack).toBe(0);
+    expect(existingDebt.amount).toBe(150); // 100 + 50
     expect(mockAccountRepository.save).toHaveBeenCalledTimes(2);
     expect(mockAccountRepository.save).toHaveBeenCalledWith(expect.objectContaining({ name: "Alice", balance: 0 }));
     expect(mockAccountRepository.save).toHaveBeenCalledWith(expect.objectContaining({ name: "Bob", balance: 150 }));
@@ -100,11 +117,77 @@ describe('TransferMoney', () => {
     mockDebtRepository.findDebtBetween.mockReturnValue(null);
     
     const result = transferMoney.execute("Alice", "Bob", 100);
+    expect(result.amount).toBe(100);
     expect(result.senderNewBalance).toBe(0);
     expect(result.cashTransferred).toBe(0);
+    expect(result.debtReduced).toBe(0);
     expect(result.debtCreated).toBe(100);
+    expect(result.receiverOwesBack).toBe(0);
     expect(mockAccountRepository.save).not.toHaveBeenCalled();
     expect(mockDebtRepository.save).toHaveBeenCalledTimes(1);
     expect(mockDebtRepository.save).toHaveBeenCalledWith({ debtorName: "Alice", creditorName: "Bob", amount: 100 });
+  });
+
+  it('should reduce receiver debt when receiver owes sender (partial debt)', () => {
+    const receiverDebtToSender = new Debt("Bob", "Alice", 70);
+    mockDebtRepository.findDebtBetween.mockImplementation((debtor, creditor) => {
+      if (debtor === "Bob" && creditor === "Alice") return receiverDebtToSender;
+      return null;
+    });
+
+    const result = transferMoney.execute("Alice", "Bob", 30);
+    
+    expect(result.amount).toBe(30);
+    expect(result.senderNewBalance).toBe(100);
+    expect(result.cashTransferred).toBe(0);
+    expect(result.debtReduced).toBe(30);
+    expect(result.debtCreated).toBe(0);
+    expect(result.receiverOwesBack).toBe(40); // 70 - 30
+    expect(receiverDebtToSender.amount).toBe(40);
+    expect(mockDebtRepository.save).toHaveBeenCalledWith(receiverDebtToSender);
+    expect(mockDebtRepository.remove).not.toHaveBeenCalled();
+    expect(mockAccountRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should reduce receiver debt and transfer remaining cash', () => {
+    const receiverDebtToSender = new Debt("Bob", "Alice", 30);
+    mockDebtRepository.findDebtBetween.mockImplementation((debtor, creditor) => {
+      if (debtor === "Bob" && creditor === "Alice") return receiverDebtToSender;
+      return null;
+    });
+
+    const result = transferMoney.execute("Alice", "Bob", 50);
+    
+    expect(result.amount).toBe(50);
+    expect(result.senderNewBalance).toBe(80); // 100 - 20 (only cash transferred)
+    expect(result.cashTransferred).toBe(20); // 50 - 30
+    expect(result.debtReduced).toBe(30);
+    expect(result.debtCreated).toBe(0);
+    expect(result.receiverOwesBack).toBe(0);
+    expect(receiverDebtToSender.amount).toBe(0);
+    expect(mockDebtRepository.remove).toHaveBeenCalledWith(receiverDebtToSender);
+    expect(mockAccountRepository.save).toHaveBeenCalledWith(senderAccount);
+    expect(mockAccountRepository.save).toHaveBeenCalledWith(receiverAccount); // Cash was transferred
+    expect(receiverAccount.balance).toBe(70); // 50 + 20
+  });
+
+  it('should clear receiver debt fully when transfer amount equals debt', () => {
+    const receiverDebtToSender = new Debt("Bob", "Alice", 50);
+    mockDebtRepository.findDebtBetween.mockImplementation((debtor, creditor) => {
+      if (debtor === "Bob" && creditor === "Alice") return receiverDebtToSender;
+      return null;
+    });
+
+    const result = transferMoney.execute("Alice", "Bob", 50);
+    
+    expect(result.amount).toBe(50);
+    expect(result.senderNewBalance).toBe(100); // No withdrawal!
+    expect(result.cashTransferred).toBe(0);
+    expect(result.debtReduced).toBe(50);
+    expect(result.debtCreated).toBe(0);
+    expect(result.receiverOwesBack).toBe(0);
+    expect(receiverDebtToSender.amount).toBe(0);
+    expect(mockDebtRepository.remove).toHaveBeenCalledWith(receiverDebtToSender);
+    expect(mockAccountRepository.save).not.toHaveBeenCalled(); // No account changes!
   });
 });

@@ -18,16 +18,16 @@ describe('InMemoryDebtRepository', () => {
     expect(found.amount).toBe(100);
   });
 
-  it('should update an existing debt amount', () => {
+  it('should update an existing debt by modifying the reference', () => {
     const debt = new Debt('Alice', 'Bob', 100);
     repo.save(debt);
   
-    const updatedDebt = new Debt('Alice', 'Bob', 200);
-    repo.save(updatedDebt);
+    debt.amount = 150;
+    repo.save(debt);
   
     const found = repo.findDebtBetween('Alice', 'Bob');
     expect(found).toBe(debt);
-    expect(found.amount).toBe(300);
+    expect(found.amount).toBe(150);
   
     const allDebts = repo.findDebtsByDebtor('Alice');
     expect(allDebts.length).toBe(1);

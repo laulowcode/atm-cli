@@ -7,7 +7,13 @@ export class CliPresenter {
   }
 
   formatDeposit(dto) {
-    let output = `Your balance is $${dto.balance}`;
+    let output = '';
+
+    if (dto.logs && dto.logs.length > 0) {
+      output += dto.logs.join('\n') + '\n';
+    }
+
+    output += `Your balance is $${dto.balance}`;
     output += this._formatDebts(dto.remainingDebts, []);
     return output;
   }
@@ -17,12 +23,25 @@ export class CliPresenter {
   }
 
   formatTransfer(dto) {
-    let output = `Transferred $${dto.cashTransferred} to ${dto.receiverName}`;
-    output += `\nYour balance is $${dto.senderNewBalance}`;
+    let output = '';
+    
+    const hasCashTransfer = dto.cashTransferred > 0;
+    const hasDebtReduction = dto.debtReduced > 0;
+    
+    if (hasCashTransfer) {
+      output += `Transferred $${dto.cashTransferred} to ${dto.receiverName}\n`;
+    }
+    
+    output += `Your balance is $${dto.senderNewBalance}`;
 
-    if (dto.debtOwned) {
+    if (dto.debtOwned && dto.debtOwned.amount > 0) {
       output += `\nOwed $${dto.debtOwned.amount} to ${dto.debtOwned.creditorName}`;
     }
+    
+    if (dto.receiverOwesBack && dto.receiverOwesBack > 0) {
+      output += `\nOwed $${dto.receiverOwesBack} from ${dto.receiverName}`;
+    }
+    
     return output;
   }
 

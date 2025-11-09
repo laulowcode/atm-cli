@@ -71,7 +71,14 @@ describe('CliController', () => {
   it('should call TransferMoney use case on transfer command', () => {
     mockSession.getCurrentUser.mockReturnValue('Alice');
 
-    const useCaseDto = { cashTransferred: 30, senderNewBalance: 100, debtCreated: 70 };
+    const useCaseDto = { 
+      amount: 100,
+      cashTransferred: 30, 
+      senderNewBalance: 100, 
+      debtReduced: 0,
+      debtCreated: 70,
+      receiverOwesBack: 0
+    };
     mockUseCases.transferMoney.execute.mockReturnValue(useCaseDto);
     
     mockPresenter.formatTransfer.mockReturnValue('Transferred $30 to Bob\nYour balance is $100\nOwed $70 to Bob');
@@ -79,16 +86,21 @@ describe('CliController', () => {
     const output = controller.handleCommand('transfer Bob 100');
     expect(mockUseCases.transferMoney.execute).toHaveBeenCalledWith('Alice', 'Bob', 100);
     const presenterDto = {
+      amount: useCaseDto.amount,
       cashTransferred: useCaseDto.cashTransferred,
+      debtReduced: useCaseDto.debtReduced,
+      debtCreated: useCaseDto.debtCreated,
       receiverName: 'Bob',
       senderNewBalance: useCaseDto.senderNewBalance,
       debtOwned: {
         amount: useCaseDto.debtCreated,
         creditorName: 'Bob'
-      }
+      },
+      receiverOwesBack: useCaseDto.receiverOwesBack
     };
     expect(mockPresenter.formatTransfer).toHaveBeenCalledWith(presenterDto);
-    expect(output).toBe('Transferred $30 to Bob\nYour balance is $100\nOwed $70 to Bob');  });
+    expect(output).toBe('Transferred $30 to Bob\nYour balance is $100\nOwed $70 to Bob');
+  });
 
   it('should call presenter formatError if use case throws an error', () => {
     mockSession.getCurrentUser.mockReturnValue('Alice');

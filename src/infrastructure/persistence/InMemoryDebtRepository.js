@@ -41,11 +41,7 @@ export class InMemoryDebtRepository extends DebtRepository {
    */
   save(debt) {
     const existingDebt = this.findDebtBetween(debt.debtorName, debt.creditorName);
-    
-    // If the debt already exists, update the amount only
-    if (existingDebt) {
-      existingDebt.amount += debt.amount;
-    } else {
+    if (!existingDebt) {
       this.constructor.debts.push(debt);
     }
   }

@@ -54,10 +54,14 @@ export class CliController {
 
           const transferDto = this.useCases.transferMoney.execute(currentUser, receiverName, transferAmount);
           const presenterDto = {
+            amount: transferDto.amount,
             cashTransferred: transferDto.cashTransferred,
+            debtReduced: transferDto.debtReduced,
+            debtCreated: transferDto.debtCreated,
             receiverName: receiverName,
             senderNewBalance: transferDto.senderNewBalance,
-            debtOwned: transferDto.debtCreated > 0 ? { amount: transferDto.debtCreated, creditorName: receiverName } : null
+            debtOwned: transferDto.debtCreated > 0 ? { amount: transferDto.debtCreated, creditorName: receiverName } : null,
+            receiverOwesBack: transferDto.receiverOwesBack
           };
 
           return this.presenter.formatTransfer(presenterDto);

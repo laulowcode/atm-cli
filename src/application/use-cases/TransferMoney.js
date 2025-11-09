@@ -32,35 +32,63 @@ export class TransferMoney {
     }
 
     let cashTransferred = 0;
+    let debtReduced = 0;
     let debtCreated = 0;
 
-    // If the sender has enough balance, transfer the full amount. Otherwise, transfer the remaining balance.
-    cashTransferred = Math.min(senderAccount.balance, amount);
+    const receiverDebtToSender = this.debtRepository.findDebtBetween(receiverName, senderName);
 
-    if (cashTransferred > 0) {
-      senderAccount.withdraw(cashTransferred);
-      receiverAccount.deposit(cashTransferred);
-      this.accountRepository.save(receiverAccount);
-      this.accountRepository.save(senderAccount);
+    let remainingTransfer = amount;
+  
+    // Priority 1: Reduce receiver's debt (debt forgiveness - no withdrawal)
+    if (receiverDebtToSender && receiverDebtToSender.amount > 0) {
+      const debtReduction = Math.min(remainingTransfer, receiverDebtToSender.amount);
+      
+      receiverDebtToSender.amount -= debtReduction;
+      if (receiverDebtToSender.amount <= 0) {
+        this.debtRepository.remove(receiverDebtToSender);
+      } else {
+        this.debtRepository.save(receiverDebtToSender);
+      }
+      
+      debtReduced = debtReduction;
+      remainingTransfer -= debtReduction;
     }
 
-    debtCreated = amount - cashTransferred;
-
-    if (debtCreated > 0) {
-      let existingDebt = this.debtRepository.findDebtBetween(senderName, receiverName);
-      if (existingDebt) {
-        existingDebt.amount += debtCreated;
-        this.debtRepository.save(existingDebt);
-      } else {
-        const newDebt = new Debt(senderName, receiverName, debtCreated);
-        this.debtRepository.save(newDebt);
+    // Priority 2: Transfer remaining cash (only if debt is cleared and amount > debt)
+    if (remainingTransfer > 0) {
+      cashTransferred = Math.min(senderAccount.balance, remainingTransfer);
+      
+      if (cashTransferred > 0) {
+        senderAccount.withdraw(cashTransferred);
+        receiverAccount.deposit(cashTransferred);
+        this.accountRepository.save(senderAccount);
+        this.accountRepository.save(receiverAccount);
+        remainingTransfer -= cashTransferred;
       }
     }
 
+    // Priority 3: Create/add debt (if not enough money)
+    if (remainingTransfer > 0) {
+      const senderDebtToReceiver = this.debtRepository.findDebtBetween(senderName, receiverName);
+      if (senderDebtToReceiver) {
+        senderDebtToReceiver.amount += remainingTransfer;
+        this.debtRepository.save(senderDebtToReceiver);
+      } else {
+        const newDebt = new Debt(senderName, receiverName, remainingTransfer);
+        this.debtRepository.save(newDebt);
+      }
+      debtCreated = remainingTransfer;
+    }
+
+    const receiverRemainingDebt = this.debtRepository.findDebtBetween(receiverName, senderName);
+
     return {
       senderNewBalance: senderAccount.balance,
+      amount: amount,
       cashTransferred: cashTransferred,
-      debtCreated: debtCreated
+      debtReduced: debtReduced,
+      debtCreated: debtCreated,
+      receiverOwesBack: receiverRemainingDebt ? receiverRemainingDebt.amount : 0
     };
   } 
 }
