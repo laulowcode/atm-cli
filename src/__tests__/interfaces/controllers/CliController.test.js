@@ -113,4 +113,91 @@ describe('CliController', () => {
     expect(mockPresenter.formatError).toHaveBeenCalledWith('No user is logged in');
     expect(output).toBe('No user is logged in');
   });
+
+  it('should call logout and return formatted message', () => {
+    mockSession.getCurrentUser.mockReturnValue('Alice');
+    mockPresenter.formatLogout.mockReturnValue('Goodbye Alice!');
+    
+    const output = controller.handleCommand('logout');
+    
+    expect(mockSession.logout).toHaveBeenCalled();
+    expect(mockPresenter.formatLogout).toHaveBeenCalledWith({ name: 'Alice' });
+    expect(output).toBe('Goodbye Alice!');
+  });
+
+  it('should return error when trying to logout without login', () => {
+    mockSession.getCurrentUser.mockReturnValue(null);
+    mockPresenter.formatError.mockReturnValue('No user is logged in');
+    
+    const output = controller.handleCommand('logout');
+    
+    expect(mockSession.logout).not.toHaveBeenCalled();
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('No user is logged in');
+    expect(output).toBe('No user is logged in');
+  });
+
+  it('should return error for invalid command', () => {
+    mockSession.getCurrentUser.mockReturnValue('Alice');
+    mockPresenter.formatError.mockReturnValue('Invalid command: help');
+    
+    const output = controller.handleCommand('help');
+    
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('Invalid command: help');
+    expect(output).toBe('Invalid command: help');
+  });
+
+  it('should return error when login without name', () => {
+    mockPresenter.formatError.mockReturnValue('Name is required');
+    
+    const output = controller.handleCommand('login');
+    
+    expect(mockUseCases.loginUser.execute).not.toHaveBeenCalled();
+    expect(mockSession.login).not.toHaveBeenCalled();
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('Name is required');
+    expect(output).toBe('Name is required');
+  });
+
+  it('should return error when deposit with invalid amount', () => {
+    mockSession.getCurrentUser.mockReturnValue('Alice');
+    mockPresenter.formatError.mockReturnValue('Invalid amount');
+    
+    const output = controller.handleCommand('deposit abc');
+    
+    expect(mockUseCases.depositMoney.execute).not.toHaveBeenCalled();
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('Invalid amount');
+    expect(output).toBe('Invalid amount');
+  });
+
+  it('should return error when withdraw with invalid amount', () => {
+    mockSession.getCurrentUser.mockReturnValue('Alice');
+    mockPresenter.formatError.mockReturnValue('Invalid amount');
+    
+    const output = controller.handleCommand('withdraw xyz');
+    
+    expect(mockUseCases.withdrawMoney.execute).not.toHaveBeenCalled();
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('Invalid amount');
+    expect(output).toBe('Invalid amount');
+  });
+
+  it('should return error when transfer without receiver name', () => {
+    mockSession.getCurrentUser.mockReturnValue('Alice');
+    mockPresenter.formatError.mockReturnValue('Receiver name is required');
+    
+    const output = controller.handleCommand('transfer');
+    
+    expect(mockUseCases.transferMoney.execute).not.toHaveBeenCalled();
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('Receiver name is required');
+    expect(output).toBe('Receiver name is required');
+  });
+
+  it('should return error when transfer with invalid amount', () => {
+    mockSession.getCurrentUser.mockReturnValue('Alice');
+    mockPresenter.formatError.mockReturnValue('Invalid amount');
+    
+    const output = controller.handleCommand('transfer Bob invalid');
+    
+    expect(mockUseCases.transferMoney.execute).not.toHaveBeenCalled();
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('Invalid amount');
+    expect(output).toBe('Invalid amount');
+  });
 });

@@ -30,6 +30,10 @@ export class CliPresenter {
     return `Goodbye ${dto.name}!`;
   }
 
+  formatError(message) {
+    return message;
+  }
+
   /**
    * @private
    * @param {import('../../domain/entities/Debt.js').Debt[]} debtsOwned - The debts owned by the user

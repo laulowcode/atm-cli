@@ -41,10 +41,14 @@ describe('CliPresenter', () => {
     expect(result).toBe('Hello Alice!\nYour balance is $100.\nOwed $100 to Bob\nOwed $50 from Charlie');
   });
 
-  it('should format the deposit output correctly', () => {
-    const dto = { amount: 100, balance: 100, remainingDebts: [] };
+  it('should format the deposit output correctly (with remaining debts)', () => {
+    const dto = { 
+      amount: 100, 
+      balance: 50, 
+      remainingDebts: [{ amount: 50, creditorName: 'Bob' }] 
+    };
     const result = presenter.formatDeposit(dto);
-    expect(result).toBe('Your balance is $100.');
+    expect(result).toBe('Your balance is $50.\nOwed $50 to Bob');
   });
 
   it('should format the withdraw output correctly', () => {
@@ -74,5 +78,21 @@ describe('CliPresenter', () => {
     const dto = { name: 'Alice' };
     const result = presenter.formatLogout(dto);
     expect(result).toBe('Goodbye Alice!');
+  });
+
+  it('should format error message correctly', () => {
+    const result = presenter.formatError('Insufficient balance');
+    expect(result).toBe('Insufficient balance');
+  });
+
+  it('should format the login output correctly (with null/undefined debts)', () => {
+    const dto = { 
+      name: 'Alice', 
+      balance: 100, 
+      debtsOwned: undefined,
+      debtsOwnedFromOthers: undefined 
+    };
+    const result = presenter.formatLogin(dto);
+    expect(result).toBe('Hello Alice!\nYour balance is $100.');
   });
 });

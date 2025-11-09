@@ -38,12 +38,10 @@ export class TransferMoney {
     cashTransferred = Math.min(senderAccount.balance, amount);
 
     if (cashTransferred > 0) {
-      const withdrawSuccess = senderAccount.withdraw(cashTransferred);
-      if (withdrawSuccess) {
-        receiverAccount.deposit(cashTransferred);
-        this.accountRepository.save(receiverAccount);
-        this.accountRepository.save(senderAccount);
-      }
+      senderAccount.withdraw(cashTransferred);
+      receiverAccount.deposit(cashTransferred);
+      this.accountRepository.save(receiverAccount);
+      this.accountRepository.save(senderAccount);
     }
 
     debtCreated = amount - cashTransferred;
