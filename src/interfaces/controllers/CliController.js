@@ -57,7 +57,7 @@ export class CliController {
             cashTransferred: transferDto.cashTransferred,
             receiverName: receiverName,
             senderNewBalance: transferDto.senderNewBalance,
-            debtCreated: transferDto.debtCreated
+            debtOwned: transferDto.debtCreated > 0 ? { amount: transferDto.debtCreated, creditorName: receiverName } : null
           };
 
           return this.presenter.formatTransfer(presenterDto);

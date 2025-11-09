@@ -74,7 +74,7 @@ describe('CliController', () => {
     const useCaseDto = { cashTransferred: 30, senderNewBalance: 100, debtCreated: 70 };
     mockUseCases.transferMoney.execute.mockReturnValue(useCaseDto);
     
-    mockPresenter.formatTransfer.mockReturnValue('Transferred $30 to Bob\nYour balance is $100');
+    mockPresenter.formatTransfer.mockReturnValue('Transferred $30 to Bob\nYour balance is $100\nOwed $70 to Bob');
 
     const output = controller.handleCommand('transfer Bob 100');
     expect(mockUseCases.transferMoney.execute).toHaveBeenCalledWith('Alice', 'Bob', 100);
@@ -82,11 +82,13 @@ describe('CliController', () => {
       cashTransferred: useCaseDto.cashTransferred,
       receiverName: 'Bob',
       senderNewBalance: useCaseDto.senderNewBalance,
-      debtCreated: useCaseDto.debtCreated
+      debtOwned: {
+        amount: useCaseDto.debtCreated,
+        creditorName: 'Bob'
+      }
     };
     expect(mockPresenter.formatTransfer).toHaveBeenCalledWith(presenterDto);
-    expect(output).toBe('Transferred $30 to Bob\nYour balance is $100');
-  });
+    expect(output).toBe('Transferred $30 to Bob\nYour balance is $100\nOwed $70 to Bob');  });
 
   it('should call presenter formatError if use case throws an error', () => {
     mockSession.getCurrentUser.mockReturnValue('Alice');
