@@ -59,7 +59,7 @@ export class DepositMoney {
     }
     
     return {
-      finalBalance: account.balance,
+      balance: account.balance,
       logs: transferLogs,
       remainingDebts: this.debtRepository.findDebtsByDebtor(name)
     };

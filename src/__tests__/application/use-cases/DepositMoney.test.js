@@ -58,7 +58,7 @@ describe('DepositMoney', () => {
     expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
     expect(mockDebtRepository.save).not.toHaveBeenCalled();
     expect(mockDebtRepository.remove).not.toHaveBeenCalled();
-    expect(result.finalBalance).toBe(110);
+    expect(result.balance).toBe(110);
     expect(result.logs).toEqual([]);
   });
 
@@ -79,7 +79,7 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.save).toHaveBeenCalledWith(debt);
     expect(mockDebtRepository.remove).not.toHaveBeenCalled(); // Debt is not fully paid off yet
 
-    expect(result.finalBalance).toBe(10);
+    expect(result.balance).toBe(10);
     expect(result.logs).toEqual(['Transferred 30 to Bob']);
   });
 
@@ -99,7 +99,7 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.save).not.toHaveBeenCalled();
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debt);
 
-    expect(result.finalBalance).toBe(10);
+    expect(result.balance).toBe(10);
     expect(result.logs).toEqual(['Transferred 70 to Bob']);
   });
 
@@ -119,7 +119,7 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.save).not.toHaveBeenCalled();
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debt);
 
-    expect(result.finalBalance).toBe(40);
+    expect(result.balance).toBe(40);
     expect(result.logs).toEqual(['Transferred 70 to Bob']);
   });
 
@@ -145,7 +145,7 @@ describe('DepositMoney', () => {
 
     expect(debtorAccount.balance).toBe(10); // No additional deposit because there is no money left
     expect(mockAccountRepository.save).not.toHaveBeenCalledWith(debtorAccount);
-    expect(result.finalBalance).toBe(10);
+    expect(result.balance).toBe(10);
     expect(result.logs).toEqual(['Transferred 30 to Bob']);
   });
 
@@ -178,7 +178,7 @@ describe('DepositMoney', () => {
     // There is 70 left to deposit into the account
     expect(debtorAccount.balance).toBe(80); // 10 + 70
     expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
-    expect(result.finalBalance).toBe(80);
+    expect(result.balance).toBe(80);
     expect(result.logs).toEqual(['Transferred 30 to Bob']); // Only the second debt is logged
   });
 
@@ -215,7 +215,7 @@ describe('DepositMoney', () => {
     expect(mockAccountRepository.save).toHaveBeenCalledWith(thirdAccount);
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debtFromJohnToJames);
 
-    expect(result.finalBalance).toBe(40);
+    expect(result.balance).toBe(40);
     expect(result.logs).toEqual(['Transferred 20 to Bob', 'Transferred 50 to Charlie']);
   });
 });
