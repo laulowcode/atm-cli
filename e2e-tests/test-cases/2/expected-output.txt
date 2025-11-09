@@ -1,0 +1,4 @@
+$ Hello, Alice!
+Your balance is $0
+$ Alice is already logged in. Please logout first.
+$ Goodbye!
