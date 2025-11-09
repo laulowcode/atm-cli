@@ -35,13 +35,13 @@ describe('CliController', () => {
   it('should call LoginUser use case on login command', () => {
     const dto = { name: 'Alice', balance: 0, debtsOwned: [], debtsOwnedFromOthers: [] };
     mockUseCases.loginUser.execute.mockReturnValue(dto);
-    mockPresenter.formatLogin.mockReturnValue('Hello Alice!\nYour balance is $0');
+    mockPresenter.formatLogin.mockReturnValue('Hello, Alice!\nYour balance is $0');
 
     const output = controller.handleCommand('login Alice');
     expect(mockUseCases.loginUser.execute).toHaveBeenCalledWith('Alice');
     expect(mockSession.login).toHaveBeenCalledWith('Alice');
     expect(mockPresenter.formatLogin).toHaveBeenCalledWith(dto);
-    expect(output).toBe('Hello Alice!\nYour balance is $0');
+    expect(output).toBe('Hello, Alice!\nYour balance is $0');
   });
 
   it('should call DepositMoney use case on deposit command', () => {
@@ -74,7 +74,7 @@ describe('CliController', () => {
     const useCaseDto = { cashTransferred: 30, senderNewBalance: 100, debtCreated: 70 };
     mockUseCases.transferMoney.execute.mockReturnValue(useCaseDto);
     
-    mockPresenter.formatTransfer.mockReturnValue('Transferred $30 to Bob.\nYour balance is $100');
+    mockPresenter.formatTransfer.mockReturnValue('Transferred $30 to Bob\nYour balance is $100');
 
     const output = controller.handleCommand('transfer Bob 100');
     expect(mockUseCases.transferMoney.execute).toHaveBeenCalledWith('Alice', 'Bob', 100);
@@ -85,7 +85,7 @@ describe('CliController', () => {
       debtCreated: useCaseDto.debtCreated
     };
     expect(mockPresenter.formatTransfer).toHaveBeenCalledWith(presenterDto);
-    expect(output).toBe('Transferred $30 to Bob.\nYour balance is $100');
+    expect(output).toBe('Transferred $30 to Bob\nYour balance is $100');
   });
 
   it('should call presenter formatError if use case throws an error', () => {
@@ -116,13 +116,13 @@ describe('CliController', () => {
 
   it('should call logout and return formatted message', () => {
     mockSession.getCurrentUser.mockReturnValue('Alice');
-    mockPresenter.formatLogout.mockReturnValue('Goodbye Alice!');
+    mockPresenter.formatLogout.mockReturnValue('Goodbye, Alice!');
     
     const output = controller.handleCommand('logout');
     
     expect(mockSession.logout).toHaveBeenCalled();
     expect(mockPresenter.formatLogout).toHaveBeenCalledWith({ name: 'Alice' });
-    expect(output).toBe('Goodbye Alice!');
+    expect(output).toBe('Goodbye, Alice!');
   });
 
   it('should return error when trying to logout without login', () => {

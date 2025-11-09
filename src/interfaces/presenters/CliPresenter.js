@@ -1,24 +1,24 @@
 export class CliPresenter {
   formatLogin(dto) {
-    let output = `Hello ${dto.name}!`;
-    output += `\nYour balance is $${dto.balance}.`;
+    let output = `Hello, ${dto.name}!`;
+    output += `\nYour balance is $${dto.balance}`;
     output += this._formatDebts(dto.debtsOwned, dto.debtsOwnedFromOthers);
     return output;
   }
 
   formatDeposit(dto) {
-    let output = `Your balance is $${dto.balance}.`;
+    let output = `Your balance is $${dto.balance}`;
     output += this._formatDebts(dto.remainingDebts, []);
     return output;
   }
 
   formatWithdraw(dto) {
-    return `Your balance is $${dto.balance}.`
+    return `Your balance is $${dto.balance}`
   }
 
   formatTransfer(dto) {
-    let output = `Transferred $${dto.cashTransferred} to ${dto.receiverName}.`;
-    output += `\nYour balance is $${dto.senderNewBalance}.`;
+    let output = `Transferred $${dto.cashTransferred} to ${dto.receiverName}`;
+    output += `\nYour balance is $${dto.senderNewBalance}`;
 
     if (dto.debtOwned) {
       output += `\nOwed $${dto.debtOwned.amount} to ${dto.debtOwned.creditorName}`;
@@ -27,7 +27,7 @@ export class CliPresenter {
   }
 
   formatLogout(dto) {
-    return `Goodbye ${dto.name}!`;
+    return `Goodbye, ${dto.name}!`;
   }
 
   formatError(message) {
