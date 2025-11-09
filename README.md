@@ -187,14 +187,17 @@ See `e2e-tests/README.md` for more details.
 
 1. **Auto-Pay Debts**: Automatically pays off debts in order before adding to balance
 2. **Priority Payment**: Pays oldest debts first
-3. **Remaining Balance**: Any amount left after debt payment is added to account
+3. **Chaining Payment**: When a creditor receives payment, if they also have debts, the system automatically pays off their debts first (recursive chain payment)
+4. **Remaining Balance**: Any amount left after debt payment is added to account
 
 ### Debt Management
 
 - Debts are automatically created when transferring more than available balance
 - Debts are automatically reduced when creditor transfers to debtor (debt forgiveness)
 - Debts are automatically paid when depositing money
+- **Chaining Payment**: When paying a debt, if the creditor also has debts, their debts are automatically paid first (recursive chain payment)
 - Multiple debts to different creditors are supported
+- Circular debt protection: Infinite loops are prevented using a visited set
 
 ## Project Structure
 

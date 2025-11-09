@@ -33,6 +33,7 @@ describe('CliController', () => {
   });
 
   it('should call LoginUser use case on login command', () => {
+    mockSession.getCurrentUser.mockReturnValue(null);
     const dto = { name: 'Alice', balance: 0, debtsOwned: [], debtsOwnedFromOthers: [] };
     mockUseCases.loginUser.execute.mockReturnValue(dto);
     mockPresenter.formatLogin.mockReturnValue('Hello, Alice!\nYour balance is $0');
@@ -42,6 +43,17 @@ describe('CliController', () => {
     expect(mockSession.login).toHaveBeenCalledWith('Alice');
     expect(mockPresenter.formatLogin).toHaveBeenCalledWith(dto);
     expect(output).toBe('Hello, Alice!\nYour balance is $0');
+  });
+
+  it('should return error when login while already logged in', () => {
+    mockSession.getCurrentUser.mockReturnValue('Alice');
+    mockPresenter.formatError.mockReturnValue('Alice is already logged in. Please logout first.');
+    
+    const output = controller.handleCommand('login Bob');
+    
+    expect(mockPresenter.formatError).toHaveBeenCalledWith('Alice is already logged in. Please logout first.');
+    expect(output).toBe('Alice is already logged in. Please logout first.');
+    expect(mockUseCases.loginUser.execute).not.toHaveBeenCalled();
   });
 
   it('should call DepositMoney use case on deposit command', () => {

@@ -14,6 +14,11 @@ export class CliController {
       if (cmd === 'login') {
         const [name] = args;
         if (!name) throw new Error('Name is required');
+        
+        const currentUser = this.session.getCurrentUser();
+        if (currentUser) {
+          throw new Error(`${currentUser} is already logged in. Please logout first.`);
+        }
 
         const dto = this.useCases.loginUser.execute(name);
         this.session.login(name);

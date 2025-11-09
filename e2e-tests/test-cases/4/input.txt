@@ -10,11 +10,15 @@ logout
 login Bob
 transfer Charlie 30
 logout
+login Charlie
+transfer Alice 30
+logout
 login Alice
-deposit 40
+deposit 10
 logout
 login Bob
 logout
 login Charlie
 logout
 exit
+

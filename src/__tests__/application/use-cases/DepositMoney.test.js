@@ -64,7 +64,12 @@ describe('DepositMoney', () => {
 
   it('should pay off partial debt (debt amount is greater than deposit amount)', () => {
     const debt = new Debt("Alice", "Bob", 70);
-    mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt]);
+    // Mock to return debts based on debtor name
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debt];
+      if (debtorName === "Bob") return []; // Bob has no debts
+      return [];
+    });
 
     const result = depositMoney.execute("Alice", 30);
 
@@ -85,7 +90,11 @@ describe('DepositMoney', () => {
 
   it('should pay off full debt (debt amount is equal to deposit amount)', () => {
     const debt = new Debt("Alice", "Bob", 70);
-    mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt]);
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debt];
+      if (debtorName === "Bob") return []; // Bob has no debts
+      return [];
+    });
 
     const result = depositMoney.execute("Alice", 70);
 
@@ -105,7 +114,11 @@ describe('DepositMoney', () => {
 
   it('should pay off debt and deposit remaining amount', () => {
     const debt = new Debt("Alice", "Bob", 70);
-    mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt]);
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debt];
+      if (debtorName === "Bob") return []; // Bob has no debts
+      return [];
+    });
 
     const result = depositMoney.execute("Alice", 100);
 
@@ -126,7 +139,12 @@ describe('DepositMoney', () => {
   it('should break loop when remaining amount is 0', () => {
     const debt1 = new Debt("Alice", "Bob", 30);
     const debt2 = new Debt("Alice", "Charlie", 50);
-    mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt1, debt2]);
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debt1, debt2];
+      if (debtorName === "Bob") return []; // Bob has no debts
+      if (debtorName === "Charlie") return []; // Charlie has no debts
+      return [];
+    });
 
     const result = depositMoney.execute("Alice", 30);
 
@@ -152,7 +170,11 @@ describe('DepositMoney', () => {
   it('should skip debt when creditor account is not found', () => {
     const debtToNonExistentCreditor = new Debt("Alice", "NonExistent", 50);
     const debtToJane = new Debt("Alice", "Bob", 30);
-    mockDebtRepository.findDebtsByDebtor.mockReturnValue([debtToNonExistentCreditor, debtToJane]);
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debtToNonExistentCreditor, debtToJane];
+      if (debtorName === "Bob") return []; // Bob has no debts
+      return [];
+    });
 
     // Mock to return null for the non-existent creditor
     mockAccountRepository.findByName.mockImplementation((name) => {
@@ -197,7 +219,12 @@ describe('DepositMoney', () => {
   it('should pay off multiple debts', () => {
     const debtFromJohnToJane = new Debt("Alice", "Bob", 20); 
     const debtFromJohnToJames = new Debt("Alice", "Charlie", 50);
-    mockDebtRepository.findDebtsByDebtor.mockReturnValue([debtFromJohnToJane, debtFromJohnToJames]);
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debtFromJohnToJane, debtFromJohnToJames];
+      if (debtorName === "Bob") return []; // Bob has no debts
+      if (debtorName === "Charlie") return []; // Charlie has no debts
+      return [];
+    });
 
     const result = depositMoney.execute("Alice", 100);
 
@@ -217,5 +244,115 @@ describe('DepositMoney', () => {
 
     expect(result.balance).toBe(40);
     expect(result.logs).toEqual(['Transferred $20 to Bob', 'Transferred $50 to Charlie']);
+  });
+
+  it('should chain payment when creditor also has debts', () => {
+    // Alice owes Bob $30; Bob owes Charlie $30. Alice deposits $40.
+    const debtAliceToBob = new Debt("Alice", "Bob", 30);
+    const debtBobToCharlie = new Debt("Bob", "Charlie", 30);
+
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debtAliceToBob];
+      if (debtorName === "Bob") return [debtBobToCharlie];
+      if (debtorName === "Charlie") return [];
+      return [];
+    });
+
+    debtorAccount = new Account("Alice", 0);
+    creditorAccount = new Account("Bob", 0);
+    thirdAccount = new Account("Charlie", 0);
+
+    mockAccountRepository.findByName.mockImplementation((name) => {
+      if (name === "Alice") return debtorAccount;
+      if (name === "Bob") return creditorAccount;
+      if (name === "Charlie") return thirdAccount;
+      return null;
+    });
+
+    const result = depositMoney.execute("Alice", 40);
+
+    expect(debtorAccount.balance).toBe(10);
+    expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
+
+    expect(creditorAccount.balance).toBe(0);
+    expect(thirdAccount.balance).toBe(30);
+    expect(mockAccountRepository.save).toHaveBeenCalledWith(thirdAccount);
+
+    expect(debtAliceToBob.amount).toBe(0);
+    expect(mockDebtRepository.remove).toHaveBeenCalledWith(debtAliceToBob);
+    expect(debtBobToCharlie.amount).toBe(0);
+    expect(mockDebtRepository.remove).toHaveBeenCalledWith(debtBobToCharlie);
+
+    expect(result.balance).toBe(10);
+    expect(result.logs).toEqual([
+      'Transferred $30 to Bob',
+      'Transferred $30 to Charlie'
+    ]);
+  });
+
+  it('should throw error if account becomes null after chaining payment', () => {
+    // Simulates missing account after chaining
+    const debt = new Debt("Alice", "Bob", 30);
+
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debt];
+      if (debtorName === "Bob") return [];
+      return [];
+    });
+
+    let callCount = 0;
+    mockAccountRepository.findByName.mockImplementation((name) => {
+      callCount++;
+      if (name === "Alice") {
+        if (callCount === 1) return debtorAccount;
+        return null;
+      }
+      if (name === "Bob") return creditorAccount;
+      return null;
+    });
+
+    expect(() => depositMoney.execute("Alice", 30)).toThrow('Account not found');
+  });
+
+  it('should return 0 when user already visited (circular debt protection)', () => {
+    // Chain: Alice → Bob → Charlie → Alice (circular). Each owes $30. Alice deposits $10.
+    const debtAliceToBob = new Debt("Alice", "Bob", 30);
+    const debtBobToCharlie = new Debt("Bob", "Charlie", 30);
+    const debtCharlieToAlice = new Debt("Charlie", "Alice", 30);
+
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((debtorName) => {
+      if (debtorName === "Alice") return [debtAliceToBob];
+      if (debtorName === "Bob") return [debtBobToCharlie];
+      if (debtorName === "Charlie") return [debtCharlieToAlice];
+      return [];
+    });
+
+    debtorAccount = new Account("Alice", 0);
+    creditorAccount = new Account("Bob", 0);
+    thirdAccount = new Account("Charlie", 0);
+
+    mockAccountRepository.findByName.mockImplementation((name) => {
+      if (name === "Alice") return debtorAccount;
+      if (name === "Bob") return creditorAccount;
+      if (name === "Charlie") return thirdAccount;
+      return null;
+    });
+
+    const result = depositMoney.execute("Alice", 10);
+
+    // Each debt is reduced, but no one receives new balance due to circular protection
+    expect(debtAliceToBob.amount).toBe(20);
+    expect(debtBobToCharlie.amount).toBe(20);
+    expect(debtCharlieToAlice.amount).toBe(20);
+
+    expect(debtorAccount.balance).toBe(0);
+    expect(creditorAccount.balance).toBe(0);
+    expect(thirdAccount.balance).toBe(0);
+
+    expect(result.logs).toEqual([
+      'Transferred $10 to Bob',
+      'Transferred $10 to Charlie',
+      'Transferred $10 to Alice'
+    ]);
   });
 });

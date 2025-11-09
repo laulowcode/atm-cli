@@ -11,13 +11,49 @@ export class DepositMoney {
   }
 
   execute(name, amount) {
+    const transferLogs = [];
+    const visited = new Set(); // Track processed users to avoid infinite loops
+    
+    const remainingAmount = this._executeWithChaining(name, amount, transferLogs, visited);
+    
+    const account = this.accountRepository.findByName(name);
+    if (!account) {
+      throw new Error('Account not found');
+    }
+    
+    if (remainingAmount > 0) {
+      account.deposit(remainingAmount);
+      this.accountRepository.save(account);
+    }
+    
+    return {
+      balance: account.balance,
+      logs: transferLogs,
+      remainingDebts: this.debtRepository.findDebtsByDebtor(name)
+    };
+  }
+
+  /**
+   * Execute deposit with chaining payment support
+   * @param {string} name - Account name
+   * @param {number} amount - Amount to deposit
+   * @param {Array<string>} transferLogs - Array to collect transfer logs
+   * @param {Set<string>} visited - Set to track visited users (avoid infinite loops)
+   * @returns {number} Remaining amount after paying debts (this amount should be deposited to the account's balance)
+   */
+  _executeWithChaining(name, amount, transferLogs, visited) {
+    // Avoid infinite loops (circular debt protection)
+    if (visited.has(name)) {
+      return 0;
+    }
+    visited.add(name);
+
     const account = this.accountRepository.findByName(name);
     if (!account) {
       throw new Error('Account not found');
     }
 
     let remainingAmount = amount;
-    const transferLogs = [];
 
     // Begin to pay off debts
     const debts = this.debtRepository.findDebtsByDebtor(name);
@@ -32,16 +68,10 @@ export class DepositMoney {
         continue;
       }
 
-      // Step 1: Calculate the amount to pay off the debt
+      // Calculate the amount to pay off the debt
       const paymentAmount = Math.min(remainingAmount, debt.amount);
 
-      creditorAccount.deposit(paymentAmount);
-      this.accountRepository.save(creditorAccount);
-
-      // Step 2: Update the remaining amount
-      remainingAmount -= paymentAmount;
-
-      // Step 3: Update the transfer logs
+      // Update the debt (remove it from debtor's debt list)
       debt.amount -= paymentAmount;
       if (debt.amount <= 0) {
         this.debtRepository.remove(debt);
@@ -49,19 +79,27 @@ export class DepositMoney {
         this.debtRepository.save(debt);
       }
 
+      // Update the remaining amount for the debtor
+      remainingAmount -= paymentAmount;
+
       transferLogs.push(`Transferred $${paymentAmount} to ${creditorAccount.name}`);
+
+      // Chain payment - creditor receives money and pays their debts
+      // Recursively process creditor's debts first
+      const creditorRemainingAfterDebts = this._executeWithChaining(
+        debt.creditorName,
+        paymentAmount,
+        transferLogs,
+        visited
+      );
+      
+      // Deposit the remaining amount to creditor's balance
+      if (creditorRemainingAfterDebts > 0) {
+        creditorAccount.deposit(creditorRemainingAfterDebts);
+        this.accountRepository.save(creditorAccount);
+      }
     }
 
-    // After all debts are paid off, NOW deposit the remaining amount into the account
-    if (remainingAmount > 0) {
-      account.deposit(remainingAmount);
-      this.accountRepository.save(account);
-    }
-    
-    return {
-      balance: account.balance,
-      logs: transferLogs,
-      remainingDebts: this.debtRepository.findDebtsByDebtor(name)
-    };
+    return remainingAmount;
   }
 }
