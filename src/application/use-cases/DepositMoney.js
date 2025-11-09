@@ -49,7 +49,7 @@ export class DepositMoney {
         this.debtRepository.save(debt);
       }
 
-      transferLogs.push(`Transferred ${paymentAmount} to ${creditorAccount.name}`);
+      transferLogs.push(`Transferred $${paymentAmount} to ${creditorAccount.name}`);
     }
 
     // After all debts are paid off, NOW deposit the remaining amount into the account

@@ -80,7 +80,7 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.remove).not.toHaveBeenCalled(); // Debt is not fully paid off yet
 
     expect(result.balance).toBe(10);
-    expect(result.logs).toEqual(['Transferred 30 to Bob']);
+    expect(result.logs).toEqual(['Transferred $30 to Bob']);
   });
 
   it('should pay off full debt (debt amount is equal to deposit amount)', () => {
@@ -100,7 +100,7 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debt);
 
     expect(result.balance).toBe(10);
-    expect(result.logs).toEqual(['Transferred 70 to Bob']);
+    expect(result.logs).toEqual(['Transferred $70 to Bob']);
   });
 
   it('should pay off debt and deposit remaining amount', () => {
@@ -120,7 +120,7 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debt);
 
     expect(result.balance).toBe(40);
-    expect(result.logs).toEqual(['Transferred 70 to Bob']);
+    expect(result.logs).toEqual(['Transferred $70 to Bob']);
   });
 
   it('should break loop when remaining amount is 0', () => {
@@ -146,7 +146,7 @@ describe('DepositMoney', () => {
     expect(debtorAccount.balance).toBe(10); // No additional deposit because there is no money left
     expect(mockAccountRepository.save).not.toHaveBeenCalledWith(debtorAccount);
     expect(result.balance).toBe(10);
-    expect(result.logs).toEqual(['Transferred 30 to Bob']);
+    expect(result.logs).toEqual(['Transferred $30 to Bob']);
   });
 
   it('should skip debt when creditor account is not found', () => {
@@ -179,7 +179,7 @@ describe('DepositMoney', () => {
     expect(debtorAccount.balance).toBe(80); // 10 + 70
     expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
     expect(result.balance).toBe(80);
-    expect(result.logs).toEqual(['Transferred 30 to Bob']); // Only the second debt is logged
+    expect(result.logs).toEqual(['Transferred $30 to Bob']); // Only the second debt is logged
   });
 
   /**
@@ -216,6 +216,6 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debtFromJohnToJames);
 
     expect(result.balance).toBe(40);
-    expect(result.logs).toEqual(['Transferred 20 to Bob', 'Transferred 50 to Charlie']);
+    expect(result.logs).toEqual(['Transferred $20 to Bob', 'Transferred $50 to Charlie']);
   });
 });
