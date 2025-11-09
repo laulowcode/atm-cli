@@ -8,18 +8,18 @@ describe('SessionManager', () => {
   });
 
   it('should login a user', () => {
-    sessionManager.login('John Doe');
-    expect(sessionManager.getCurrentUser()).toBe('John Doe');
+    sessionManager.login('Alice');
+    expect(sessionManager.getCurrentUser()).toBe('Alice');
   });
 
   it('should logout a user', () => {
-    sessionManager.login('John Doe');
+    sessionManager.login('Alice');
     sessionManager.logout();
     expect(sessionManager.getCurrentUser()).toBeNull();
   });
 
   it('should return true if a user is logged in', () => {
-    sessionManager.login('John Doe');
+    sessionManager.login('Alice');
     expect(sessionManager.isLoggedIn()).toBe(true);
   });
 

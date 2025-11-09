@@ -16,11 +16,11 @@ describe('LogoutUser', () => {
   });
 
   it('should call session.logout and return the logged out user', () => {
-    mockSession.getCurrentUser.mockReturnValue('John Doe');
+    mockSession.getCurrentUser.mockReturnValue('Alice');
     const result = logoutUser.execute();
     expect(mockSession.getCurrentUser).toHaveBeenCalled();
     expect(mockSession.logout).toHaveBeenCalledTimes(1);
-    expect(result.loggedOutUser).toBe('John Doe');
+    expect(result.loggedOutUser).toBe('Alice');
   });
 
   it('should throw an error if no user is logged in', () => {

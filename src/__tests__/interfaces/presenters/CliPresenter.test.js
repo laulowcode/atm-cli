@@ -8,37 +8,37 @@ describe('CliPresenter', () => {
   });
 
   it('should format the login output correctly (no debt)', () => {
-    const dto = { name: 'John Doe', balance: 100, debtsOwned: [], debtsOwnedFromOthers: [] };
+    const dto = { name: 'Alice', balance: 100, debtsOwned: [], debtsOwnedFromOthers: [] };
     const result = presenter.formatLogin(dto);
-    expect(result).toBe('Hello John Doe!\nYour balance is $100.');
+    expect(result).toBe('Hello Alice!\nYour balance is $100.');
   });
 
   it('should format the login output correctly (with debt)', () => {
-    const dto = { name: 'John Doe', balance: 100, debtsOwned: [{ amount: 100, creditorName: 'Jane Doe' }], debtsOwnedFromOthers: [] };
+    const dto = { name: 'Alice', balance: 100, debtsOwned: [{ amount: 100, creditorName: 'Bob' }], debtsOwnedFromOthers: [] };
     const result = presenter.formatLogin(dto);
-    expect(result).toBe('Hello John Doe!\nYour balance is $100.\nOwed $100 to Jane Doe');
+    expect(result).toBe('Hello Alice!\nYour balance is $100.\nOwed $100 to Bob');
   });
 
   it('should format the login output correctly (with debt owed from others)', () => {
     const dto = { 
-      name: 'John Doe', 
+      name: 'Alice', 
       balance: 100, 
       debtsOwned: [], 
-      debtsOwnedFromOthers: [{ amount: 50, debtorName: 'Jane Doe' }] 
+      debtsOwnedFromOthers: [{ amount: 50, debtorName: 'Bob' }] 
     };
     const result = presenter.formatLogin(dto);
-    expect(result).toBe('Hello John Doe!\nYour balance is $100.\nOwed $50 from Jane Doe');
+    expect(result).toBe('Hello Alice!\nYour balance is $100.\nOwed $50 from Bob');
   });
 
   it('should format the login output correctly (with both types of debt)', () => {
     const dto = { 
-      name: 'John Doe', 
+      name: 'Alice', 
       balance: 100, 
-      debtsOwned: [{ amount: 100, creditorName: 'Jane Doe' }],
-      debtsOwnedFromOthers: [{ amount: 50, debtorName: 'James Doe' }]
+      debtsOwned: [{ amount: 100, creditorName: 'Bob' }],
+      debtsOwnedFromOthers: [{ amount: 50, debtorName: 'Charlie' }]
     };
     const result = presenter.formatLogin(dto);
-    expect(result).toBe('Hello John Doe!\nYour balance is $100.\nOwed $100 to Jane Doe\nOwed $50 from James Doe');
+    expect(result).toBe('Hello Alice!\nYour balance is $100.\nOwed $100 to Bob\nOwed $50 from Charlie');
   });
 
   it('should format the deposit output correctly', () => {
@@ -56,23 +56,23 @@ describe('CliPresenter', () => {
   it('should format the transfer output correctly (without debt)', () => {
     const dto = { 
       cashTransferred: 50, 
-      receiverName: 'Jane Doe', 
+      receiverName: 'Bob', 
       senderNewBalance: 50,
       debtOwned: null
     };
     const result = presenter.formatTransfer(dto);
-    expect(result).toBe('Transferred $50 to Jane Doe.\nYour balance is $50.');
+    expect(result).toBe('Transferred $50 to Bob.\nYour balance is $50.');
   });
 
   it('should format the transfer output correctly', () => {
-    const dto = { cashTransferred: 100, receiverName: 'Jane Doe', senderNewBalance: 100, debtOwned: { amount: 100, creditorName: 'Jane Doe' } };
+    const dto = { cashTransferred: 100, receiverName: 'Bob', senderNewBalance: 100, debtOwned: { amount: 100, creditorName: 'Bob' } };
     const result = presenter.formatTransfer(dto);
-    expect(result).toBe('Transferred $100 to Jane Doe.\nYour balance is $100.\nOwed $100 to Jane Doe');
+    expect(result).toBe('Transferred $100 to Bob.\nYour balance is $100.\nOwed $100 to Bob');
   });
 
   it('should format the logout output correctly', () => {
-    const dto = { name: 'John Doe' };
+    const dto = { name: 'Alice' };
     const result = presenter.formatLogout(dto);
-    expect(result).toBe('Goodbye John Doe!');
+    expect(result).toBe('Goodbye Alice!');
   });
 });

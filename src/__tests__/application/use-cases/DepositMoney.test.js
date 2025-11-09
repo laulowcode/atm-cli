@@ -31,14 +31,14 @@ describe('DepositMoney', () => {
 
     depositMoney = new DepositMoney(mockAccountRepository, mockDebtRepository);
 
-    debtorAccount = new Account("John Doe", 10);
-    creditorAccount = new Account("Jane Doe", 50);
-    thirdAccount = new Account("James Doe", 0);
+    debtorAccount = new Account("Alice", 10);
+    creditorAccount = new Account("Bob", 50);
+    thirdAccount = new Account("Charlie", 0);
 
     mockAccountRepository.findByName.mockImplementation((name) => {
-      if (name === "John Doe") return debtorAccount;
-      if (name === "Jane Doe") return creditorAccount;
-      if (name === "James Doe") return thirdAccount;
+      if (name === "Alice") return debtorAccount;
+      if (name === "Bob") return creditorAccount;
+      if (name === "Charlie") return thirdAccount;
       return null;
     });
   });
@@ -52,7 +52,7 @@ describe('DepositMoney', () => {
   it('should deposit to balance if no debt is found', () => {
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([]);
     
-    const result = depositMoney.execute("John Doe", 100);
+    const result = depositMoney.execute("Alice", 100);
 
     expect(debtorAccount.balance).toBe(110);
     expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
@@ -63,10 +63,10 @@ describe('DepositMoney', () => {
   });
 
   it('should pay off partial debt (debt amount is greater than deposit amount)', () => {
-    const debt = new Debt("John Doe", "Jane Doe", 70);
+    const debt = new Debt("Alice", "Bob", 70);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt]);
 
-    const result = depositMoney.execute("John Doe", 30);
+    const result = depositMoney.execute("Alice", 30);
 
     expect(debtorAccount.balance).toBe(10);
     // 'save' should not be called for debtor account as the balance is not changed (30 < 70)
@@ -80,14 +80,14 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.remove).not.toHaveBeenCalled(); // Debt is not fully paid off yet
 
     expect(result.finalBalance).toBe(10);
-    expect(result.logs).toEqual(['Transferred 30 to Jane Doe']);
+    expect(result.logs).toEqual(['Transferred 30 to Bob']);
   });
 
   it('should pay off full debt (debt amount is equal to deposit amount)', () => {
-    const debt = new Debt("John Doe", "Jane Doe", 70);
+    const debt = new Debt("Alice", "Bob", 70);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt]);
 
-    const result = depositMoney.execute("John Doe", 70);
+    const result = depositMoney.execute("Alice", 70);
 
     expect(debtorAccount.balance).toBe(10);
     expect(mockAccountRepository.save).not.toHaveBeenCalledWith(debtorAccount);
@@ -100,14 +100,14 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debt);
 
     expect(result.finalBalance).toBe(10);
-    expect(result.logs).toEqual(['Transferred 70 to Jane Doe']);
+    expect(result.logs).toEqual(['Transferred 70 to Bob']);
   });
 
   it('should pay off debt and deposit remaining amount', () => {
-    const debt = new Debt("John Doe", "Jane Doe", 70);
+    const debt = new Debt("Alice", "Bob", 70);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt]);
 
-    const result = depositMoney.execute("John Doe", 100);
+    const result = depositMoney.execute("Alice", 100);
 
     expect(debtorAccount.balance).toBe(40); // 100 - 70 + 10
     expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
@@ -120,15 +120,15 @@ describe('DepositMoney', () => {
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debt);
 
     expect(result.finalBalance).toBe(40);
-    expect(result.logs).toEqual(['Transferred 70 to Jane Doe']);
+    expect(result.logs).toEqual(['Transferred 70 to Bob']);
   });
 
   it('should break loop when remaining amount is 0', () => {
-    const debt1 = new Debt("John Doe", "Jane Doe", 30);
-    const debt2 = new Debt("John Doe", "James Doe", 50);
+    const debt1 = new Debt("Alice", "Bob", 30);
+    const debt2 = new Debt("Alice", "Charlie", 50);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([debt1, debt2]);
 
-    const result = depositMoney.execute("John Doe", 30);
+    const result = depositMoney.execute("Alice", 30);
 
     // Only the first debt is paid off, the second debt is not paid off because there is no money left
     expect(creditorAccount.balance).toBe(80); // 50 + 30
@@ -146,23 +146,23 @@ describe('DepositMoney', () => {
     expect(debtorAccount.balance).toBe(10); // No additional deposit because there is no money left
     expect(mockAccountRepository.save).not.toHaveBeenCalledWith(debtorAccount);
     expect(result.finalBalance).toBe(10);
-    expect(result.logs).toEqual(['Transferred 30 to Jane Doe']);
+    expect(result.logs).toEqual(['Transferred 30 to Bob']);
   });
 
   it('should skip debt when creditor account is not found', () => {
-    const debtToNonExistentCreditor = new Debt("John Doe", "NonExistent", 50);
-    const debtToJane = new Debt("John Doe", "Jane Doe", 30);
+    const debtToNonExistentCreditor = new Debt("Alice", "NonExistent", 50);
+    const debtToJane = new Debt("Alice", "Bob", 30);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([debtToNonExistentCreditor, debtToJane]);
 
     // Mock to return null for the non-existent creditor
     mockAccountRepository.findByName.mockImplementation((name) => {
-      if (name === "John Doe") return debtorAccount;
-      if (name === "Jane Doe") return creditorAccount;
+      if (name === "Alice") return debtorAccount;
+      if (name === "Bob") return creditorAccount;
       if (name === "NonExistent") return null; // The creditor does not exist
       return null;
     });
 
-    const result = depositMoney.execute("John Doe", 100);
+    const result = depositMoney.execute("Alice", 100);
 
     // The first debt is skipped because the creditor does not exist
     expect(debtToNonExistentCreditor.amount).toBe(50); // The debt is not changed
@@ -179,43 +179,43 @@ describe('DepositMoney', () => {
     expect(debtorAccount.balance).toBe(80); // 10 + 70
     expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
     expect(result.finalBalance).toBe(80);
-    expect(result.logs).toEqual(['Transferred 30 to Jane Doe']); // Only the second debt is logged
+    expect(result.logs).toEqual(['Transferred 30 to Bob']); // Only the second debt is logged
   });
 
   /**
    * @description
    * Test scenario for paying off multiple debts:
-   * - John Doe has two outstanding debts:
-   *   1. Owes Jane Doe a specified amount.
-   *   2. Owes James Doe a specified amount.
+   * - Alice has two outstanding debts:
+   *   1. Owes Bob a specified amount.
+   *   2. Owes Charlie a specified amount.
    * 
    * Account variables:
-   * - debtorAccount: John Doe - The debtor
-   * - creditorAccount: Jane Doe - The first creditor
-   * - thirdAccount: James Doe - The second creditor
+   * - debtorAccount: Alice - The debtor
+   * - creditorAccount: Bob - The first creditor
+   * - thirdAccount: Charlie - The second creditor
    */
   it('should pay off multiple debts', () => {
-    const debtFromJohnToJane = new Debt("John Doe", "Jane Doe", 20); 
-    const debtFromJohnToJames = new Debt("John Doe", "James Doe", 50);
+    const debtFromJohnToJane = new Debt("Alice", "Bob", 20); 
+    const debtFromJohnToJames = new Debt("Alice", "Charlie", 50);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([debtFromJohnToJane, debtFromJohnToJames]);
 
-    const result = depositMoney.execute("John Doe", 100);
+    const result = depositMoney.execute("Alice", 100);
 
-    // John Doe - The debtor
+    // Alice - The debtor
     expect(debtorAccount.balance).toBe(40); // 10 + 100 - 70
     expect(mockAccountRepository.save).toHaveBeenCalledWith(debtorAccount);
     
-    // Jane Doe - The first creditor
+    // Bob - The first creditor
     expect(creditorAccount.balance).toBe(70); // 50 + 20 (initial balance + amount paid)
     expect(mockAccountRepository.save).toHaveBeenCalledWith(creditorAccount);
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debtFromJohnToJane);
 
-    // James Doe - The second creditor
+    // Charlie - The second creditor
     expect(thirdAccount.balance).toBe(50); // 0 + 50
     expect(mockAccountRepository.save).toHaveBeenCalledWith(thirdAccount);
     expect(mockDebtRepository.remove).toHaveBeenCalledWith(debtFromJohnToJames);
 
     expect(result.finalBalance).toBe(40);
-    expect(result.logs).toEqual(['Transferred 20 to Jane Doe', 'Transferred 50 to James Doe']);
+    expect(result.logs).toEqual(['Transferred 20 to Bob', 'Transferred 50 to Charlie']);
   });
 });

@@ -18,12 +18,12 @@ describe('WithdrawMoney', () => {
   });
 
   it('should withdraw money from an existing account and save it', () => {
-    const existingAccount = new Account("John Doe", 100);
+    const existingAccount = new Account("Alice", 100);
     mockAccountRepository.findByName.mockReturnValue(existingAccount);
 
-    const result = withdrawMoney.execute("John Doe", 50);
+    const result = withdrawMoney.execute("Alice", 50);
 
-    expect(mockAccountRepository.findByName).toHaveBeenCalledWith("John Doe");
+    expect(mockAccountRepository.findByName).toHaveBeenCalledWith("Alice");
     expect(result.balance).toBe(50);
     expect(mockAccountRepository.save).toHaveBeenCalledWith(existingAccount);
   });
@@ -35,15 +35,15 @@ describe('WithdrawMoney', () => {
   });
 
   it('should throw an error if the account has insufficient balance', () => {
-    const existingAccount = new Account("John Doe", 100);
+    const existingAccount = new Account("Alice", 100);
     mockAccountRepository.findByName.mockReturnValue(existingAccount);
-    expect(() => withdrawMoney.execute("John Doe", 150)).toThrow('Insufficient balance');
+    expect(() => withdrawMoney.execute("Alice", 150)).toThrow('Insufficient balance');
   });
 
   it('should return the updated balance', () => {
-    const existingAccount = new Account("John Doe", 100);
+    const existingAccount = new Account("Alice", 100);
     mockAccountRepository.findByName.mockReturnValue(existingAccount);
-    const result = withdrawMoney.execute("John Doe", 50);
+    const result = withdrawMoney.execute("Alice", 50);
     expect(result.balance).toBe(50);
   });
 });

@@ -40,42 +40,42 @@ describe('LoginUser', () => {
   });
 
   it('should return existing account and debts', () => {
-    const existingAccount = new Account("John Doe");
-    const existingDebt = new Debt("John Doe", "Jane Doe", 100);
+    const existingAccount = new Account("Alice");
+    const existingDebt = new Debt("Alice", "Bob", 100);
 
     mockAccountRepository.findByName.mockReturnValue(existingAccount);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([existingDebt]);
     mockDebtRepository.findDebtsByCreditor.mockReturnValue([]);
 
-    const result = loginUser.execute("John Doe");
+    const result = loginUser.execute("Alice");
     
-    expect(mockAccountRepository.findByName).toHaveBeenCalledWith("John Doe");
+    expect(mockAccountRepository.findByName).toHaveBeenCalledWith("Alice");
     expect(mockAccountRepository.save).not.toHaveBeenCalled();
-    expect(mockDebtRepository.findDebtsByDebtor).toHaveBeenCalledWith("John Doe");
+    expect(mockDebtRepository.findDebtsByDebtor).toHaveBeenCalledWith("Alice");
     expect(result.balance).toBe(existingAccount.balance);
     expect(result.debtsOwned.length).toBe(1);
     expect(result.debtsOwned[0].amount).toBe(100);
   });
 
   it('should return debts owed from others (Jane sees John owes her)', () => {
-    const janeAccount = new Account("Jane Doe", 50);
-    const debtFromJohn = new Debt("John Doe", "Jane Doe", 100);
+    const janeAccount = new Account("Bob", 50);
+    const debtFromJohn = new Debt("Alice", "Bob", 100);
 
     mockAccountRepository.findByName.mockReturnValue(janeAccount);
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([]);
     mockDebtRepository.findDebtsByCreditor.mockReturnValue([debtFromJohn]);
 
-    const result = loginUser.execute("Jane Doe");
+    const result = loginUser.execute("Bob");
     
-    expect(mockAccountRepository.findByName).toHaveBeenCalledWith("Jane Doe");
-    expect(mockDebtRepository.findDebtsByDebtor).toHaveBeenCalledWith("Jane Doe");
-    expect(mockDebtRepository.findDebtsByCreditor).toHaveBeenCalledWith("Jane Doe");
+    expect(mockAccountRepository.findByName).toHaveBeenCalledWith("Bob");
+    expect(mockDebtRepository.findDebtsByDebtor).toHaveBeenCalledWith("Bob");
+    expect(mockDebtRepository.findDebtsByCreditor).toHaveBeenCalledWith("Bob");
     
-    expect(result.name).toBe("Jane Doe");
+    expect(result.name).toBe("Bob");
     expect(result.balance).toBe(50);
     expect(result.debtsOwned).toEqual([]);
     expect(result.debtsOwnedFromOthers.length).toBe(1);
-    expect(result.debtsOwnedFromOthers[0].debtorName).toBe("John Doe");
+    expect(result.debtsOwnedFromOthers[0].debtorName).toBe("Alice");
     expect(result.debtsOwnedFromOthers[0].amount).toBe(100);
   });
 });

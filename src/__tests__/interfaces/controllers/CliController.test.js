@@ -88,7 +88,7 @@ describe('CliController', () => {
     expect(output).toBe('Transferred $30 to Bob.\nYour balance is $100');
   });
 
-  it('shoudl call presenter formatError if use case throws an error', () => {
+  it('should call presenter formatError if use case throws an error', () => {
     mockSession.getCurrentUser.mockReturnValue('Alice');
     const error = new Error('Insufficient balance');
     mockUseCases.withdrawMoney.execute.mockImplementation(() => {
