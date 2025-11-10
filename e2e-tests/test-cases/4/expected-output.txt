@@ -1,47 +1,69 @@
 $ Hello, Alice!
 Your balance is $0
+
 $ Goodbye, Alice!
+
 $ Hello, Bob!
 Your balance is $0
+
 $ Goodbye, Bob!
+
 $ Hello, Charlie!
 Your balance is $0
+
 $ Goodbye, Charlie!
+
 $ Hello, Alice!
 Your balance is $0
+
 $ Your balance is $0
 Owed $30 to Bob
+
 $ Goodbye, Alice!
+
 $ Hello, Bob!
 Your balance is $0
 Owed $30 from Alice
+
 $ Your balance is $0
 Owed $30 to Charlie
+
 $ Goodbye, Bob!
+
 $ Hello, Charlie!
 Your balance is $0
 Owed $30 from Bob
+
 $ Your balance is $0
 Owed $30 to Alice
+
 $ Goodbye, Charlie!
+
 $ Hello, Alice!
 Your balance is $0
 Owed $30 to Bob
 Owed $30 from Charlie
+
 $ Transferred $10 to Bob
 Transferred $10 to Charlie
 Transferred $10 to Alice
 Your balance is $0
 Owed $20 to Bob
+
 $ Goodbye, Alice!
+
 $ Hello, Bob!
 Your balance is $0
 Owed $20 to Charlie
 Owed $20 from Alice
+
 $ Goodbye, Bob!
+
 $ Hello, Charlie!
 Your balance is $0
 Owed $20 to Alice
 Owed $20 from Bob
+
 $ Goodbye, Charlie!
+
 $ Goodbye!

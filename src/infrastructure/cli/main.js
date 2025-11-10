@@ -52,6 +52,7 @@ rl.on('line', (line) => {
   const output = controller.handleCommand(trimmedLine);
   if (output) {
     console.log(output);
+    console.log();
   }
   rl.prompt();
 }).on('close', () => {
