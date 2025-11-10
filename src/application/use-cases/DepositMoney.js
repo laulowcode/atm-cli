@@ -11,6 +11,10 @@ export class DepositMoney {
   }
 
   execute(name, amount) {
+    if (amount <= 0) {
+      throw new Error('Amount must be greater than 0');
+    }
+
     const transferLogs = [];
     const visited = new Set(); // Track processed users to avoid infinite loops
     

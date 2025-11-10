@@ -40,6 +40,15 @@ describe('WithdrawMoney', () => {
     expect(() => withdrawMoney.execute("Alice", 150)).toThrow('Insufficient balance');
   });
 
+  it('should throw error if amount is less than or equal to 0', () => {
+    const existingAccount = new Account("Alice", 100);
+    mockAccountRepository.findByName.mockReturnValue(existingAccount);
+    expect(() => withdrawMoney.execute("Alice", 0)).toThrow('Amount must be greater than 0');
+    expect(() => withdrawMoney.execute("Alice", -100)).toThrow('Amount must be greater than 0');
+    expect(() => withdrawMoney.execute("Alice", -50)).toThrow('Amount must be greater than 0');
+    expect(mockAccountRepository.save).not.toHaveBeenCalled();
+  });
+
   it('should return the updated balance', () => {
     const existingAccount = new Account("Alice", 100);
     mockAccountRepository.findByName.mockReturnValue(existingAccount);

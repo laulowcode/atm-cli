@@ -49,6 +49,14 @@ describe('DepositMoney', () => {
     expect(mockAccountRepository.save).not.toHaveBeenCalled();
   });
 
+  it('should throw error if amount is less than or equal to 0', () => {
+    mockDebtRepository.findDebtsByDebtor.mockReturnValue([]);
+    expect(() => depositMoney.execute("Alice", 0)).toThrow('Amount must be greater than 0');
+    expect(() => depositMoney.execute("Alice", -100)).toThrow('Amount must be greater than 0');
+    expect(() => depositMoney.execute("Alice", -50)).toThrow('Amount must be greater than 0');
+    expect(mockAccountRepository.save).not.toHaveBeenCalled();
+  });
+
   it('should deposit to balance if no debt is found', () => {
     mockDebtRepository.findDebtsByDebtor.mockReturnValue([]);
     
