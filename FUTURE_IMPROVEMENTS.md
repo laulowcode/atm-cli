@@ -12,3 +12,4 @@ This document lists future / high priority improvement ideas and open questions 
 
 - **Integrate with a real database system** (e.g., PostgreSQL, MongoDB) instead of using in-memory repositories for accounts, debts, and (future) transactions. This includes persistence, proper migrations, and appropriate transactional integrity.
 
+- **Separate authentication logic from controller**: Currently, `CliController` handles authentication checks directly (checking session, getting current user). Should extract authentication into a separate service/guard so controller only handles command parsing and routing.
