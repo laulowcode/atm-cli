@@ -76,8 +76,8 @@ export class DepositMoney {
       const paymentAmount = Math.min(remainingAmount, debt.amount);
 
       // Update the debt (remove it from debtor's debt list)
-      debt.amount -= paymentAmount;
-      if (debt.amount <= 0) {
+      const isFullyPaid = debt.makePayment(paymentAmount);
+      if (isFullyPaid) {
         this.debtRepository.remove(debt);
       } else {
         this.debtRepository.save(debt);
