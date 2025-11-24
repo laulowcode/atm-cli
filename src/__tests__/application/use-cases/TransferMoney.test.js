@@ -125,7 +125,7 @@ describe('TransferMoney', () => {
     expect(result.receiverOwesBack).toBe(0);
     expect(mockAccountRepository.save).not.toHaveBeenCalled();
     expect(mockDebtRepository.save).toHaveBeenCalledTimes(1);
-    expect(mockDebtRepository.save).toHaveBeenCalledWith({ debtorName: "Alice", creditorName: "Bob", amount: 100 });
+    expect(mockDebtRepository.save).toHaveBeenCalledWith({ debtorName: "Alice", creditorName: "Bob", amount: 100, payments: [] });
   });
 
   it('should reduce receiver debt when receiver owes sender (partial debt)', () => {

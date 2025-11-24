@@ -43,8 +43,8 @@ export class TransferMoney {
     if (receiverDebtToSender && receiverDebtToSender.amount > 0) {
       const debtReduction = Math.min(remainingTransfer, receiverDebtToSender.amount);
       
-      receiverDebtToSender.amount -= debtReduction;
-      if (receiverDebtToSender.amount <= 0) {
+      const isFullyPaid = receiverDebtToSender.makePayment(debtReduction);
+      if (isFullyPaid) {
         this.debtRepository.remove(receiverDebtToSender);
       } else {
         this.debtRepository.save(receiverDebtToSender);
@@ -71,7 +71,7 @@ export class TransferMoney {
     if (remainingTransfer > 0) {
       const senderDebtToReceiver = this.debtRepository.findDebtBetween(senderName, receiverName);
       if (senderDebtToReceiver) {
-        senderDebtToReceiver.amount += remainingTransfer;
+        senderDebtToReceiver.increaseDebt(remainingTransfer);
         this.debtRepository.save(senderDebtToReceiver);
       } else {
         const newDebt = new Debt(senderName, receiverName, remainingTransfer);
