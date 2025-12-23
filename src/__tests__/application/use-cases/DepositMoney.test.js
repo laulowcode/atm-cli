@@ -2,6 +2,7 @@ import { jest } from '@jest/globals';
 import { DepositMoney } from '../../../application/use-cases/DepositMoney.js';
 import { Account } from '../../../domain/entities/Account.js';
 import { Debt } from '../../../domain/entities/Debt.js';
+import { HighestAmountFirstStrategy } from '../../../application/strategies/debt-payment/HighestAmountFirstStrategy.js';
 
 const mockAccountRepository = {
   findByName: jest.fn(),
@@ -362,5 +363,57 @@ describe('DepositMoney', () => {
       'Transferred $10 to Charlie',
       'Transferred $10 to Alice'
     ]);
+  });
+
+  it('should handle 2-person circular debt', () => {
+    // Alice owes Bob $50, Bob owes Alice $50
+    const debtAliceToBob = new Debt("Alice", "Bob", 50);
+    const debtBobToAlice = new Debt("Bob", "Alice", 50);
+
+    mockDebtRepository.findDebtsByDebtor.mockImplementation((name) => {
+      if (name === "Alice") return [debtAliceToBob];
+      if (name === "Bob") return [debtBobToAlice];
+      return [];
+    });
+
+    debtorAccount = new Account("Alice", 0);
+    creditorAccount = new Account("Bob", 0);
+
+    mockAccountRepository.findByName.mockImplementation((name) => {
+      if (name === "Alice") return debtorAccount;
+      if (name === "Bob") return creditorAccount;
+      return null;
+    });
+
+    const result = depositMoney.execute("Alice", 30);
+
+    expect(debtAliceToBob.amount).toBe(20);
+    expect(debtBobToAlice.amount).toBe(20);
+    expect(result.balance).toBe(0);
+  });
+
+  it('should allow configuring debt payment strategy', () => {
+    const highestFirstStrategy = new HighestAmountFirstStrategy();
+    depositMoney = new DepositMoney(mockAccountRepository, mockDebtRepository, highestFirstStrategy);
+
+    const smallDebt = new Debt("Alice", "Bob", 10);
+    const largeDebt = new Debt("Alice", "Charlie", 90);
+
+    mockDebtRepository.findDebtsByDebtor.mockReturnValue([smallDebt, largeDebt]);
+
+    const bobAccount = new Account("Bob", 0);
+    const charlieAccount = new Account("Charlie", 0);
+
+    mockAccountRepository.findByName.mockImplementation((name) => {
+      if (name === "Alice") return debtorAccount;
+      if (name === "Bob") return bobAccount;
+      if (name === "Charlie") return charlieAccount;
+      return null;
+    });
+
+    depositMoney.execute("Alice", 50);
+
+    expect(largeDebt.amount).toBe(40);
+    expect(smallDebt.amount).toBe(10);
   });
 });
