@@ -1,3 +1,5 @@
+import { OldestDebtFirstStrategy } from '../strategies/debt-payment/OldestDebtFirstStrategy.js';
+
 export class DepositMoney {
   /**
    * @constructor
@@ -5,9 +7,10 @@ export class DepositMoney {
    * @param {import('../../domain/repositories/AccountRepository.js').AccountRepository} accountRepository - The account repository
    * @param {import('../../domain/repositories/DebtRepository.js').DebtRepository} debtRepository - The debt repository
    */
-  constructor(accountRepository, debtRepository) {
+  constructor(accountRepository, debtRepository, debtPaymentStrategy = new OldestDebtFirstStrategy()) {
     this.accountRepository = accountRepository;
     this.debtRepository = debtRepository;
+    this.debtPaymentStrategy = debtPaymentStrategy;
   }
 
   execute(name, amount) {
@@ -60,7 +63,7 @@ export class DepositMoney {
     let remainingAmount = amount;
 
     // Begin to pay off debts
-    const debts = this.debtRepository.findDebtsByDebtor(name);
+    const debts = this.debtPaymentStrategy.sort(this.debtRepository.findDebtsByDebtor(name));
 
     for (const debt of debts) {
       if (remainingAmount <= 0) {
