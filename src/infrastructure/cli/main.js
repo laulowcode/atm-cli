@@ -18,6 +18,23 @@ import { CliPresenter } from '../../interfaces/presenters/CliPresenter.js';
 // Application (State)
 import { SessionManager } from '../../application/state/SessionManager.js';
 
+/* PostgreSQL implemntation (uncomment and configure to use Postgres as persistence layer) */
+// import pg from 'pg';
+// import { PostgresAccountRepository } from '../persistence/PostgresAccountRepository.js';
+// import { PostgresDebtRepository } from '../persistence/PostgresDebtRepository.js';
+
+// const { Pool } = pg;
+// const pool = new Pool({
+//   host: process.env.DB_HOST || 'localhost',
+//   database: process.env.DB_NAME || 'atm_db',
+//   user: process.env.DB_USER || 'postgres',
+//   password: process.env.DB_PASSWORD,
+//   port: 5432
+// });
+
+// const accountRepository = new PostgresAccountRepository(pool);
+// const debtRepository = new PostgresDebtRepository(pool);
+
 const accountRepository = new InMemoryAccountRepository();
 const debtRepository = new InMemoryDebtRepository();
 
